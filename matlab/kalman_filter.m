@@ -10,6 +10,7 @@ baudRate = 115200;
 s = serialport(port, baudRate);
 configureTerminator(s, "CR/LF");
 flush(s);
+Bias = -1.947137;
 
 %% Kalman Filter Configuration
 
@@ -55,12 +56,13 @@ while true
 
         %% Convert raw data to deg/s
         gyro_z_dps = raw_value / 131;
+        gyro_z_calibrated = gyro_z_dps - Bias;     
 
         %% Kalman Filter
 
         if first_sample
 
-            x_est = gyro_z_dps;
+            x_est = gyro_z_calibrated;
             P = R;
 
             first_sample = false;
@@ -75,7 +77,7 @@ while true
             K = P_pred / (P_pred + R);
 
             % 3. Correction
-            x_est = x_pred + K * (gyro_z_dps - x_pred);
+            x_est = x_pred + K * (gyro_z_calibrated - x_pred);
 
             % 4. Update covariance
             P = (1 - K) * P_pred;
@@ -86,7 +88,7 @@ while true
         t = toc(t0);
 
         %% Update Plot
-        addpoints(h_raw, t, gyro_z_dps);
+        addpoints(h_raw, t, gyro_z_calibrated);
         addpoints(h_filtered, t, x_est);
 
         drawnow limitrate;
