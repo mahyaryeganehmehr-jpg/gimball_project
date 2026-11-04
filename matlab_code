@@ -1,0 +1,50 @@
+
+clc;
+clear;
+close all;
+
+%% Serial Configuration
+port = "COM12";       % Change to your COM port
+baudRate = 115200;
+
+s = serialport(port, baudRate);
+configureTerminator(s, "CR/LF");
+flush(s);
+
+%% Plot Configuration
+figure('Name', 'MPU6050 Gyroscope Z');
+
+h = animatedline('LineWidth', 1.5);
+
+grid on;
+xlabel('Time (s)');
+ylabel('Angular Velocity (deg/s)');
+title('Gyroscope Z - Live Data');
+
+t0 = tic;
+
+disp("Receiving data... Press Ctrl+C to stop.");
+
+%% Main Loop
+while true
+
+    line = readline(s);
+
+    raw_value = str2double(strtrim(line));
+
+    if ~isnan(raw_value)
+
+        % Convert raw data to deg/s
+        gyro_z_dps = raw_value / 131;
+
+        % Time
+        t = toc(t0);
+
+        % Update plot
+        addpoints(h, t, gyro_z_dps);
+
+        drawnow limitrate;
+
+    end
+
+end
